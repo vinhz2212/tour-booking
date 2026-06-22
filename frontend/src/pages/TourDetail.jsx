@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../services/api";
 import ReviewSection from "../components/ReviewSection";
+import { getImageUrl } from "../utils/image";
 
 const regionLabels = {
   north: "Miền Bắc",
@@ -61,7 +62,7 @@ export default function TourDetail() {
     <div className="min-h-screen bg-gray-50 pb-12">
       <div className="w-full h-80 overflow-hidden">
         <img
-          src={tour.thumbnail}
+          src={getImageUrl(tour.thumbnail)}
           alt={tour.title}
           className="w-full h-full object-cover"
         />

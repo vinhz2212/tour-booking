@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Tour = require("../models/Tour");
 const { protect, adminOnly } = require("../middlewares/auth");
+const upload = require("../middlewares/upload");
 const { Op } = require("sequelize");
 
 // GET /api/tours – Lấy danh sách tour (có filter)
@@ -34,6 +35,22 @@ router.get("/admin/all", protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 });
+
+// POST /api/tours/upload – Upload ảnh tour (chỉ admin)
+router.post(
+  "/upload",
+  protect,
+  adminOnly,
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "Vui lòng chọn 1 ảnh để upload" });
+    }
+
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: imageUrl });
+  },
+);
 
 // GET /api/tours/:id – Lấy chi tiết 1 tour
 router.get("/:id", async (req, res) => {

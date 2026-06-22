@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import { getImageUrl } from "../utils/image";
 
 export default function Home() {
   const [tours, setTours] = useState([]);
@@ -96,7 +97,7 @@ export default function Home() {
               >
                 <div className="overflow-hidden h-40">
                   <img
-                    src={tour.thumbnail}
+                    src={getImageUrl(tour.thumbnail)}
                     alt={tour.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                   />

@@ -23,6 +23,7 @@ export default function TourForm() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -37,6 +38,29 @@ export default function TourForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+  };
+
+  // Xử lý khi chọn file ảnh
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setUploading(true);
+    try {
+      const res = await api.post("/tours/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      // Lưu đường dẫn ảnh (backend trả về dạng /uploads/xxx.jpg)
+      setForm({ ...form, thumbnail: res.data.url });
+      toast.success("Tải ảnh lên thành công!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Tải ảnh thất bại");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -62,6 +86,13 @@ export default function TourForm() {
   if (fetching) {
     return <p className="text-center mt-10 text-gray-400">Đang tải...</p>;
   }
+
+  // Tính đường dẫn ảnh đầy đủ để preview (ảnh upload là đường dẫn tương đối /uploads/...)
+  const previewSrc = form.thumbnail
+    ? form.thumbnail.startsWith("http")
+      ? form.thumbnail
+      : `${import.meta.env.VITE_API_URL.replace("/api", "")}${form.thumbnail}`
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -173,18 +204,30 @@ export default function TourForm() {
             </div>
           </div>
 
+          {/* Upload ảnh thay cho dán link */}
           <div>
             <label className="block text-gray-600 text-sm mb-1">
-              Link ảnh thumbnail
+              Ảnh đại diện tour
             </label>
+
+            {previewSrc && (
+              <img
+                src={previewSrc}
+                alt="Xem trước"
+                className="w-48 h-32 object-cover rounded-lg mb-3 border border-gray-200"
+              />
+            )}
+
             <input
-              type="text"
-              name="thumbnail"
-              value={form.thumbnail || ""}
-              onChange={handleChange}
-              placeholder="https://..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleImageChange}
+              disabled={uploading}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
+            {uploading && (
+              <p className="text-teal-600 text-sm mt-1">Đang tải ảnh lên...</p>
+            )}
           </div>
 
           <div>
@@ -205,7 +248,7 @@ export default function TourForm() {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploading}
               className="bg-teal-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50"
             >
               {loading ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo tour"}

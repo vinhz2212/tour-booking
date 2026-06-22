@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
 import useAuthStore from "../store/authStore";
+import { getImageUrl } from "../utils/image";
 
 const statusLabels = {
   pending: { text: "Chờ xác nhận", color: "bg-amber-50 text-amber-700" },
@@ -87,7 +88,7 @@ export default function Profile() {
               className="bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex gap-4"
             >
               <img
-                src={booking.Tour?.thumbnail}
+                src={getImageUrl(booking.Tour?.thumbnail)}
                 alt={booking.Tour?.title}
                 className="w-28 h-20 object-cover rounded-lg"
               />

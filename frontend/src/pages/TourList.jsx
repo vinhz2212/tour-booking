@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../services/api";
+import { getImageUrl } from "../utils/image";
 
 const regionLabels = {
   north: "Miền Bắc",
@@ -109,7 +110,7 @@ export default function TourList() {
               className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition"
             >
               <img
-                src={tour.thumbnail}
+                src={getImageUrl(tour.thumbnail)}
                 alt={tour.title}
                 className="w-full h-48 object-cover"
               />

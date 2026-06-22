@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
+import { getImageUrl } from "../utils/image";
 
 const methods = [
   {
@@ -102,7 +103,7 @@ export default function Payment() {
         {/* Thông tin đơn */}
         <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-5 mb-6 flex items-center gap-4">
           <img
-            src={booking.Tour?.thumbnail}
+            src={getImageUrl(booking.Tour?.thumbnail)}
             alt={booking.Tour?.title}
             className="w-24 h-20 object-cover rounded-lg"
           />

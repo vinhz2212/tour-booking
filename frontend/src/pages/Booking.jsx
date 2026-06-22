@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
 import useAuthStore from "../store/authStore";
+import { getImageUrl } from "../utils/image";
 
 export default function Booking() {
   const { id } = useParams();
@@ -97,7 +98,7 @@ export default function Booking() {
           <div className="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-6">
             <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
               <img
-                src={tour.thumbnail}
+                src={getImageUrl(tour.thumbnail)}
                 alt={tour.title}
                 className="w-32 h-24 object-cover rounded-lg"
               />

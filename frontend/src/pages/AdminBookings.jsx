@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "../services/api";
 import useAuthStore from "../store/authStore";
+import { getImageUrl } from "../utils/image";
 
 const statusOptions = ["pending", "confirmed", "cancelled"];
 const statusLabels = {
@@ -84,7 +85,7 @@ export default function AdminBookings() {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex gap-4">
                   <img
-                    src={b.Tour?.thumbnail}
+                    src={getImageUrl(b.Tour?.thumbnail)}
                     alt={b.Tour?.title}
                     className="w-24 h-20 object-cover rounded-lg"
                   />
