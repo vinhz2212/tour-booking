@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Camera } from "lucide-react";
 import api from "../services/api";
 import useAuthStore from "../store/authStore";
 import { getImageUrl } from "../utils/image";
@@ -17,9 +18,11 @@ const paymentLabels = {
 };
 
 export default function Profile() {
-  const { user } = useAuthStore();
+  const { user, updateAvatar } = useAuthStore();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchBookings = () => {
     setLoading(true);
@@ -46,20 +49,73 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    setUploading(true);
+    try {
+      const res = await api.post("/auth/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      updateAvatar(res.data.avatar);
+      toast.success("Đã cập nhật ảnh đại diện");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload ảnh thất bại");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         {/* Thông tin cá nhân */}
-        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 mb-6">
-          <h1 className="text-xl font-bold text-gray-800 mb-3">
-            Tài khoản của tôi
-          </h1>
-          <p className="text-gray-600 text-sm">
-            <span className="text-gray-400">Họ tên:</span> {user?.full_name}
-          </p>
-          <p className="text-gray-600 text-sm">
-            <span className="text-gray-400">Email:</span> {user?.email}
-          </p>
+        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 mb-6 flex items-center gap-6">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-teal-100 overflow-hidden flex items-center justify-center">
+              {user?.avatar ? (
+                <img
+                  src={getImageUrl(user.avatar)}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-teal-700">
+                  {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center text-white hover:bg-teal-700 transition disabled:opacity-50"
+              title="Đổi ảnh đại diện"
+            >
+              <Camera size={14} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 mb-1">
+              {user?.full_name}
+            </h1>
+            <p className="text-gray-500 text-sm">{user?.email}</p>
+            {uploading && (
+              <p className="text-teal-600 text-xs mt-1">Đang tải ảnh lên...</p>
+            )}
+          </div>
         </div>
 
         {/* Lịch sử đặt tour */}
@@ -107,6 +163,10 @@ export default function Profile() {
 
                 <p className="text-gray-500 text-sm mt-1">
                   {booking.Tour?.destination}
+                </p>
+
+                <p className="text-gray-400 text-xs mt-1">
+                  Đặt lúc: {new Date(booking.createdAt).toLocaleString("vi-VN")}
                 </p>
 
                 <div className="flex justify-between items-end mt-3">

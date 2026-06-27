@@ -37,6 +37,9 @@ app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/weather", require("./routes/weather"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/chat", require("./routes/chat"));
+app.use("/api/stats", require("./routes/stats"));
+app.use("/api/payment", require("./routes/payment"));
+app.use("/api/users", require("./routes/users"));
 
 // ── Khởi động ──────────────────────────────
 const PORT = process.env.PORT || 5000;

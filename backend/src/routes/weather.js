@@ -15,6 +15,15 @@ function removeVietnameseTones(str) {
   return str.trim();
 }
 
+// Đổi tên địa danh thành tọa độ (lat/lon) – chính xác hơn tra theo tên
+async function geocodeCity(cityName) {
+  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityName)},VN&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return { lat: data[0].lat, lon: data[0].lon };
+}
+
 // GET /api/weather/:tourId?date=YYYY-MM-DD - lấy thời tiết + gợi ý lộ trình AI
 router.get("/:tourId", async (req, res) => {
   try {
@@ -41,8 +50,17 @@ router.get("/:tourId", async (req, res) => {
 
     const cityName = removeVietnameseTones(tour.destination.split(",")[0]);
 
-    // 1. Gọi OpenWeatherMap lấy dự báo 5 ngày (mốc 3 giờ/lần)
-    const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cityName)},VN&units=metric&lang=vi&appid=${process.env.OPENWEATHER_API_KEY}`;
+    // 1. Đổi tên địa danh thành tọa độ
+    const coords = await geocodeCity(cityName);
+    if (!coords) {
+      return res.status(400).json({
+        message: "Không tìm thấy dữ liệu thời tiết cho địa điểm này",
+        detail: `Không xác định được tọa độ cho "${cityName}"`,
+      });
+    }
+
+    // 2. Gọi OpenWeatherMap lấy dự báo 5 ngày theo tọa độ (mốc 3 giờ/lần)
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&units=metric&lang=vi&appid=${process.env.OPENWEATHER_API_KEY}`;
     const weatherRes = await fetch(weatherUrl);
     const weatherData = await weatherRes.json();
 
@@ -81,7 +99,7 @@ router.get("/:tourId", async (req, res) => {
       dailyForecast = dailyForecast.slice(0, tour.duration_days);
     }
 
-    // 2. Gọi Google Gemini sinh gợi ý lộ trình dựa trên thời tiết
+    // 3. Gọi Google Gemini sinh gợi ý lộ trình dựa trên thời tiết
     const weatherSummary = dailyForecast
       .map(
         (d, i) =>

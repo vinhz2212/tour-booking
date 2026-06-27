@@ -100,6 +100,9 @@ export default function AdminBookings() {
                       {b.User?.full_name} · {b.User?.email}
                       {b.User?.phone && ` · ${b.User.phone}`}
                     </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      Đặt lúc: {new Date(b.createdAt).toLocaleString("vi-VN")}
+                    </p>
                   </div>
                 </div>
 
@@ -118,6 +121,7 @@ export default function AdminBookings() {
 
               <div className="flex flex-wrap gap-6 items-center border-t border-gray-100 pt-3 text-sm">
                 <p className="text-gray-500">
+                  Khởi hành:{" "}
                   {new Date(b.departure_date).toLocaleDateString("vi-VN")}
                 </p>
                 <p className="text-gray-500">

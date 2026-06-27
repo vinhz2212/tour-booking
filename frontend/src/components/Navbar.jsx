@@ -34,20 +34,12 @@ export default function Navbar() {
         </Link>
 
         {user?.role === "admin" && (
-          <>
-            <Link
-              to="/admin"
-              className="text-gray-600 hover:text-teal-700 transition font-medium"
-            >
-              Quản lý tour
-            </Link>
-            <Link
-              to="/admin/bookings"
-              className="text-gray-600 hover:text-teal-700 transition font-medium"
-            >
-              Đơn đặt
-            </Link>
-          </>
+          <Link
+            to="/admin"
+            className="text-gray-600 hover:text-teal-700 transition font-medium"
+          >
+            Admin
+          </Link>
         )}
 
         {user ? (

@@ -44,10 +44,23 @@ export default function Payment() {
   }, [id]);
 
   const handlePay = async () => {
+    // VNPay – thanh toán thật, chuyển hướng sang cổng VNPay
+    if (method === "vnpay") {
+      setProcessing(true);
+      try {
+        const res = await api.post("/payment/create-url", { bookingId: id });
+        window.location.href = res.data.paymentUrl;
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Không tạo được giao dịch");
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // MoMo / Chuyển khoản – vẫn giả lập như cũ
     setProcessing(true);
     setStep("processing");
 
-    // Mô phỏng thời gian xử lý thanh toán (giả lập gọi cổng thanh toán)
     setTimeout(async () => {
       try {
         await api.put(`/bookings/${id}/pay`);
@@ -147,24 +160,33 @@ export default function Payment() {
                     className="accent-teal-600"
                   />
                   <span className="font-medium">{m.name}</span>
+                  {m.id === "vnpay" && (
+                    <span className="text-xs text-teal-600 ml-auto">
+                      Thanh toán thật (sandbox)
+                    </span>
+                  )}
                 </label>
               ))}
             </div>
 
             <button
               onClick={handlePay}
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition"
+              disabled={processing}
+              className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition disabled:opacity-50"
             >
-              Thanh toán {Number(booking.total_price).toLocaleString("vi-VN")}đ
+              {processing
+                ? "Đang xử lý..."
+                : `Thanh toán ${Number(booking.total_price).toLocaleString("vi-VN")}đ`}
             </button>
 
             <p className="text-xs text-gray-400 text-center mt-3">
-              * Đây là môi trường demo, không phát sinh giao dịch tiền thật.
+              * VNPay dùng môi trường sandbox (test), không phát sinh giao dịch
+              tiền thật. MoMo/Chuyển khoản vẫn là demo mô phỏng.
             </p>
           </div>
         )}
 
-        {/* Bước đang xử lý */}
+        {/* Bước đang xử lý (chỉ áp dụng cho MoMo/Bank) */}
         {step === "processing" && (
           <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-10 text-center">
             <div className="w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -175,7 +197,7 @@ export default function Payment() {
           </div>
         )}
 
-        {/* Bước thành công */}
+        {/* Bước thành công (chỉ áp dụng cho MoMo/Bank) */}
         {step === "success" && (
           <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-10 text-center">
             <p className="text-teal-600 text-5xl mb-4">✓</p>

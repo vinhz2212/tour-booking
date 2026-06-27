@@ -2,6 +2,8 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { protect } = require("../middlewares/auth");
+const upload = require("../middlewares/upload");
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -62,7 +64,28 @@ router.post("/login", async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
       },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server", error: err.message });
+  }
+});
+
+// POST /api/auth/avatar – Upload/đổi ảnh đại diện (user đang đăng nhập)
+router.post("/avatar", protect, upload.single("avatar"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Vui lòng chọn 1 ảnh để upload" });
+    }
+
+    const avatarUrl = `/uploads/${req.file.filename}`;
+
+    await User.update({ avatar: avatarUrl }, { where: { id: req.user.id } });
+
+    res.json({
+      message: "Cập nhật ảnh đại diện thành công",
+      avatar: avatarUrl,
     });
   } catch (err) {
     res.status(500).json({ message: "Lỗi server", error: err.message });

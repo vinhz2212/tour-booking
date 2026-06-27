@@ -1,19 +1,23 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/AdminLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import TourList from "./pages/TourList";
 import TourDetail from "./pages/TourDetail";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminTours from "./pages/AdminTours";
 import TourForm from "./pages/TourForm";
 import Booking from "./pages/Booking";
 import Profile from "./pages/Profile";
 import AdminBookings from "./pages/AdminBookings";
+import AdminUsers from "./pages/AdminUsers";
 import WeatherForecast from "./pages/WeatherForecast";
 import Chatbot from "./components/Chatbot";
 import Payment from "./pages/Payment";
+import PaymentResult from "./pages/PaymentResult";
 
 export default function App() {
   return (
@@ -28,41 +32,25 @@ export default function App() {
         <Route path="/booking/:id" element={<Booking />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/weather" element={<WeatherForecast />} />
+        <Route path="/payment/result" element={<PaymentResult />} />
         <Route path="/payment/:id" element={<Payment />} />
 
-        {/* Các route admin được bảo vệ */}
+        {/* Khu vực Admin – dùng layout chung có sidebar */}
         <Route
           path="/admin"
           element={
             <AdminRoute>
-              <AdminDashboard />
+              <AdminLayout />
             </AdminRoute>
           }
-        />
-        <Route
-          path="/admin/tours/new"
-          element={
-            <AdminRoute>
-              <TourForm />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/tours/:id/edit"
-          element={
-            <AdminRoute>
-              <TourForm />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/bookings"
-          element={
-            <AdminRoute>
-              <AdminBookings />
-            </AdminRoute>
-          }
-        />
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="tours" element={<AdminTours />} />
+          <Route path="tours/new" element={<TourForm />} />
+          <Route path="tours/:id/edit" element={<TourForm />} />
+          <Route path="bookings" element={<AdminBookings />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
       </Routes>
       <Chatbot />
     </>

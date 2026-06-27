@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import api from "../services/api";
-import useAuthStore from "../store/authStore";
 
 const regionLabels = {
   north: "Miền Bắc",
@@ -10,135 +9,182 @@ const regionLabels = {
   south: "Miền Nam",
 };
 
+const statusLabels = {
+  pending: "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  cancelled: "Đã hủy",
+};
+
+const REGION_COLORS = ["#f97362", "#14b8a6", "#a78bfa"];
+const STATUS_COLORS = ["#facc15", "#22c55e", "#ef4444"];
+
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
-  const [tours, setTours] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchTours = () => {
-    setLoading(true);
+  useEffect(() => {
     api
-      .get("/tours/admin/all")
-      .then((res) => setTours(res.data))
+      .get("/stats/dashboard")
+      .then((res) => setStats(res.data))
       .catch((err) => {
-        toast.error("Không thể tải danh sách tour");
+        toast.error("Không thể tải dữ liệu thống kê");
         console.error(err);
       })
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchTours();
   }, []);
 
-  const handleDelete = async (id, title) => {
-    if (!window.confirm(`Xóa tour "${title}"?`)) return;
+  if (loading) return <p className="text-gray-400">Đang tải...</p>;
+  if (!stats) return <p className="text-red-500">Không có dữ liệu</p>;
 
-    try {
-      await api.delete(`/tours/${id}`);
-      toast.success("Đã xóa tour");
-      fetchTours();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Xóa thất bại");
-    }
-  };
+  const regionData = stats.regionCounts.map((r) => ({
+    name: regionLabels[r.region] || r.region,
+    value: Number(r.count),
+  }));
 
-  if (!user || user.role !== "admin") {
-    return (
-      <div className="text-center mt-10">
-        <p className="text-red-500">Bạn không có quyền truy cập trang này</p>
-      </div>
-    );
-  }
+  const statusData = stats.statusCounts.map((s) => ({
+    name: statusLabels[s.status] || s.status,
+    value: Number(s.count),
+  }));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Quản lý Tour</h1>
-        <Link
-          to="/admin/tours/new"
-          className="bg-teal-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-teal-700 transition"
-        >
-          + Thêm tour mới
-        </Link>
+    <div className="space-y-6">
+      {/* Thẻ thống kê */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Tổng số tours đang hoạt động"
+          value={stats.totalActiveTours}
+        />
+        <StatCard label="Tổng số lượt booking" value={stats.totalBookings} />
+        <StatCard label="Số người dùng đăng ký" value={stats.totalUsers} />
+        <StatCard
+          label="Tổng doanh thu"
+          value={`${Number(stats.totalRevenue).toLocaleString("vi-VN")}đ`}
+          highlight
+        />
       </div>
 
-      {loading ? (
-        <p className="text-gray-400">Đang tải...</p>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+      {/* Biểu đồ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Điểm đến">
+          <DonutWithTable data={regionData} colors={REGION_COLORS} />
+        </ChartCard>
+        <ChartCard title="Trạng thái Booking">
+          <DonutWithTable data={statusData} colors={STATUS_COLORS} />
+        </ChartCard>
+      </div>
+
+      {/* Bảng dữ liệu */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Tours được đặt nhiều nhất">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="text-left p-4 text-gray-500 font-medium">
-                  Tên tour
-                </th>
-                <th className="text-left p-4 text-gray-500 font-medium">
-                  Vùng miền
-                </th>
-                <th className="text-left p-4 text-gray-500 font-medium">
-                  Số ngày
-                </th>
-                <th className="text-left p-4 text-gray-500 font-medium">Giá</th>
-                <th className="text-left p-4 text-gray-500 font-medium">
-                  Trạng thái
-                </th>
-                <th className="text-left p-4 text-gray-500 font-medium">
-                  Hành động
-                </th>
+            <thead>
+              <tr className="text-left text-gray-500 border-b border-gray-100">
+                <th className="py-2">Tên tour</th>
+                <th className="py-2">Số lượt đặt</th>
               </tr>
             </thead>
             <tbody>
-              {tours.map((tour) => (
-                <tr
-                  key={tour.id}
-                  className="border-b border-gray-50 hover:bg-gray-50"
-                >
-                  <td className="p-4 font-medium text-gray-800">
-                    {tour.title}
-                  </td>
-                  <td className="p-4 text-gray-500">
-                    {regionLabels[tour.region]}
-                  </td>
-                  <td className="p-4 text-gray-500">
-                    {tour.duration_days} ngày
-                  </td>
-                  <td className="p-4 text-teal-700 font-semibold">
-                    {Number(tour.price_per_person).toLocaleString("vi-VN")}đ
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-md ${
-                        tour.status === "active"
-                          ? "bg-teal-50 text-teal-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {tour.status === "active" ? "Hoạt động" : "Ẩn"}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-3">
-                      <Link
-                        to={`/admin/tours/${tour.id}/edit`}
-                        className="text-teal-700 hover:underline"
-                      >
-                        Sửa
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(tour.id, tour.title)}
-                        className="text-red-500 hover:underline"
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
+              {stats.topTours.map((t) => (
+                <tr key={t.TourId} className="border-b border-gray-50">
+                  <td className="py-2">{t.Tour?.title}</td>
+                  <td className="py-2">{t.bookingCount}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </ChartCard>
+
+        <ChartCard title="Đơn đặt mới">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b border-gray-100">
+                <th className="py-2">Khách hàng</th>
+                <th className="py-2">Tour</th>
+                <th className="py-2">Tổng tiền</th>
+                <th className="py-2">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.recentBookings.map((b) => (
+                <tr key={b.id} className="border-b border-gray-50">
+                  <td className="py-2">{b.User?.full_name}</td>
+                  <td className="py-2">{b.Tour?.title}</td>
+                  <td className="py-2">
+                    {Number(b.total_price).toLocaleString("vi-VN")}đ
+                  </td>
+                  <td className="py-2">{statusLabels[b.status]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, highlight }) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-5">
+      <p className="text-xs text-gray-500 mb-2">{label}</p>
+      <p
+        className={`text-2xl font-bold ${highlight ? "text-orange-500" : "text-teal-600"}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-5">
+      <h3 className="text-gray-700 font-semibold mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function DonutWithTable({ data, colors }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-6">
+      <div className="w-48 h-48">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={2}
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={colors[i % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <table className="flex-1 text-sm w-full">
+        <tbody>
+          {data.map((d, i) => (
+            <tr key={d.name}>
+              <td className="py-1">
+                <span
+                  className="inline-block w-3 h-3 rounded-sm mr-2"
+                  style={{ backgroundColor: colors[i % colors.length] }}
+                />
+                {d.name}
+              </td>
+              <td className="py-1 text-right font-medium">
+                {total ? Math.round((d.value / total) * 100) : 0}%
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
