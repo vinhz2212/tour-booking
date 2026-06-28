@@ -56,19 +56,19 @@ export default function Home() {
             to="/tours?region=north"
             title="Miền Bắc"
             desc="Hạ Long, Sapa, Hà Nội"
-            img="https://images.unsplash.com/photo-1528181304800-259b08848526"
+            img="https://admin.vov.gov.vn/UploadFolder/KhoTin/Files/UploadFolder/VOVVN/Files/w800/uploaded/9eqrbt2uv7o/2020_07_04/lang_chai_ba_hangg_2_1__dwaz.jpeg"
           />
           <RegionCard
             to="/tours?region=central"
             title="Miền Trung"
             desc="Hội An, Huế, Đà Nẵng"
-            img="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b"
+            img="https://freshtravel.vn/storage/mien-trung/hoi-an-viet-nam.webp"
           />
           <RegionCard
             to="/tours?region=south"
             title="Miền Nam"
             desc="Phú Quốc, Nha Trang"
-            img="https://images.unsplash.com/photo-1573790387438-4da905039392"
+            img="https://ticotravel.com.vn/wp-content/uploads/2022/05/Bien-Nha-Trang-7.jpg"
           />
         </div>
       </section>
